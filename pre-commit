@@ -1,0 +1,20 @@
+#!/bin/bash
+FILES=$(git diff-index --cached --name-only --diff-filter=ACMR HEAD)
+ERRORS=""
+
+for file in $FILES
+do
+    EXTENSION=$(grep ".js$" <<< "$file")
+    if [ $EXTENSION != "" ]; then
+        ERROR=$(grep -Ein "console\.(dir|error|group|groupCollapsed|groupEnd|info|log|time|timeEnd|trace|warn)" $file | cut -d : -f 1)
+        if [ "$ERROR" != "" ]; then
+            ERRORS=${ERRORS}${ERROR}
+            echo -e "\033[31mConsole statement found in\033[1m" $file "\033[0m\033[31mat line:" $(sed 's/ /, /g' <<< $ERROR) "\033[0m"
+        fi
+    fi
+done
+
+if [ "$ERRORS" != "" ]; then
+    echo -e "\e[31mPlease remove console statements!\e\0m"
+    exit 1;
+fi
